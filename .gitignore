@@ -1,0 +1,26 @@
+# Data files (stored as GitHub artifacts instead)
+data/
+
+# Logs
+logs/
+*.log
+
+# Screenshots
+screenshots/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,50 @@
+name: Competitor & Media Monitor
+
+on:
+  schedule:
+    # Runs every Monday at 9:00 AM UTC
+    # Adjust for your timezone (e.g., 9 AM CET = 8 AM UTC in winter, 7 AM UTC in summer)
+    - cron: '0 9 * * 1'
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+
+jobs:
+  competitor-monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps
+
+      - name: Download previous data
+        uses: actions/download-artifact@v4
+        with:
+          name: monitor-data
+          path: data/
+        continue-on-error: true  # First run won't have data
+
+      - name: Run competitor monitor
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python monitor.py --no-media --no-screenshots
+
+      - name: Run media monitor
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python monitor.py --media-only
+
+      - name: Upload data for next run
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitor-data
+          path: data/
+          retention-days: 90

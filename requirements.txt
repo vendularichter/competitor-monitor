@@ -1,0 +1,10 @@
+# Core dependencies
+requests>=2.28.0
+beautifulsoup4>=4.11.0
+
+# For screenshot monitoring (optional)
+playwright>=1.40.0
+
+# For image comparison (optional)
+Pillow>=10.0.0
+imagehash>=4.3.0
