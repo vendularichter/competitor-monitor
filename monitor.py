@@ -24,24 +24,12 @@ def run_full_monitor(skip_screenshots: bool = False, skip_media: bool = False, d
 
     try:
         # Step 1: Crawl all competitor websites
-        print("\n[1/5] Crawling competitor websites...")
+        print("\n[1/4] Crawling competitor websites...")
         crawl_results = crawl_all_competitors()
         crawl_file = save_crawl_data(crawl_results)
 
-        # Extract keyword alerts from crawl results
-        keyword_alerts = {}
-        for name, data in crawl_results.items():
-            if data.get("keyword_alerts"):
-                keyword_alerts[name] = {
-                    "tier": data.get("tier"),
-                    "alerts": data["keyword_alerts"]
-                }
-
-        if keyword_alerts:
-            print(f"\n  HIGH-ALERT: Keywords found in {len(keyword_alerts)} competitors!")
-
         # Step 2: Compare with previous crawl
-        print("\n[2/5] Detecting content changes...")
+        print("\n[2/4] Detecting content changes...")
         crawl_files = get_latest_crawls(2)
         changes = {}
 
@@ -56,7 +44,7 @@ def run_full_monitor(skip_screenshots: bool = False, skip_media: bool = False, d
         # Step 3: Scan media sources for competitor mentions
         media_mentions = {}
         if not skip_media:
-            print("\n[3/5] Scanning media sources for competitor mentions...")
+            print("\n[3/4] Scanning media sources for competitor mentions...")
             media_results = scan_all_media()
             save_media_scan(media_results)
 
@@ -88,34 +76,18 @@ def run_full_monitor(skip_screenshots: bool = False, skip_media: bool = False, d
                     print(f"\n  Found {total} article mentions!")
                     print(generate_media_report(media_results))
         else:
-            print("\n[3/5] Media scan skipped (--no-media flag)")
+            print("\n[3/4] Media scan skipped (--no-media flag)")
 
-        # Step 4: Take and compare screenshots
-        visual_results = {}
-        if not skip_screenshots:
-            print("\n[4/5] Taking screenshots and comparing...")
-            visual_results = take_competitor_screenshots()
-            print(generate_visual_report(visual_results))
-        else:
-            print("\n[4/5] Screenshots skipped (--no-screenshots flag)")
-
-        # Step 5: Send Slack notification
-        print("\n[5/5] Sending Slack notification...")
+        # Step 4: Send Slack notification
+        print("\n[4/4] Sending Slack notification...")
         if dry_run:
             print("  Dry run - not sending to Slack")
             print("  Would send report with:")
-            print(f"    - {len(keyword_alerts)} competitors with keyword alerts")
             print(f"    - {len(changes)} competitors with content changes")
-            print(f"    - {len(media_mentions)} media sources with mentions")
-            print(f"    - {len(visual_results)} visual comparisons")
         else:
-            # Only count competitor-related changes (not media)
-            has_competitor_changes = bool(changes) or bool(keyword_alerts) or any(
-                r.get("comparison", {}).get("similar") is False for r in visual_results.values()
-            )
-
-            if has_competitor_changes:
-                success = send_competitor_report(changes, visual_results, keyword_alerts, None)
+            # Only send if there are actual content changes
+            if changes:
+                success = send_competitor_report(changes, None, None, None)
                 print(f"  {'Sent successfully!' if success else 'Failed to send (check webhook URL)'}")
             else:
                 print("  No competitor changes detected - skipping Slack notification")

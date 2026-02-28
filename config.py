@@ -15,7 +15,6 @@ COMPETITORS = [
         "news_url": "https://beter.co/news/",
         "pricing_url": None,
         "tier": "Tier 1",
-        "keywords": ["eSims", "iFrame", "24/7", "Margin"],
     },
     # Tier 1: Tech-First
     {
@@ -24,7 +23,6 @@ COMPETITORS = [
         "news_url": "https://data.bet/news/",
         "pricing_url": None,
         "tier": "Tier 1",
-        "keywords": ["Player Props", "Latency", "Bet Builder"],
     },
     # Tier 1: Data-First
     {
@@ -33,7 +31,6 @@ COMPETITORS = [
         "news_url": "https://pandascore.co/blog/",
         "pricing_url": None,
         "tier": "Tier 1",
-        "keywords": ["Odds Feed", "Widgets", "AI-driven"],
     },
     # Tier 2: Rights/Data
     {
@@ -42,7 +39,6 @@ COMPETITORS = [
         "news_url": "https://grid.gg/newsroom/",
         "pricing_url": None,
         "tier": "Tier 2",
-        "keywords": ["Official Data", "Data Rights", "Widgets"],
     },
     # Tier 2: eSims
     {
@@ -51,7 +47,6 @@ COMPETITORS = [
         "news_url": "https://sis.tv/category/news-press/",
         "pricing_url": None,
         "tier": "Tier 2",
-        "keywords": ["eBasketball", "eFootball", "24/7"],
     },
     # Tier 3: Goliaths
     {
@@ -60,7 +55,6 @@ COMPETITORS = [
         "news_url": "https://sportradar.com/news-archive/",
         "pricing_url": None,
         "tier": "Tier 3",
-        "keywords": ["License", "Acquisition", "M&A"],
     },
     # Tier 3: Platforms
     {
@@ -69,7 +63,6 @@ COMPETITORS = [
         "news_url": "https://betconstruct.com/news/",
         "pricing_url": None,
         "tier": "Tier 3",
-        "keywords": ["Sportsbook", "Platform", "API"],
     },
 ]
 
