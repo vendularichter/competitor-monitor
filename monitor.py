@@ -109,15 +109,16 @@ def run_full_monitor(skip_screenshots: bool = False, skip_media: bool = False, d
             print(f"    - {len(media_mentions)} media sources with mentions")
             print(f"    - {len(visual_results)} visual comparisons")
         else:
-            has_changes = bool(changes) or bool(keyword_alerts) or bool(media_mentions) or any(
+            # Only count competitor-related changes (not media)
+            has_competitor_changes = bool(changes) or bool(keyword_alerts) or any(
                 r.get("comparison", {}).get("similar") is False for r in visual_results.values()
             )
 
-            if has_changes or len(crawl_files) < 2:
-                success = send_competitor_report(changes, visual_results, keyword_alerts, media_mentions)
+            if has_competitor_changes:
+                success = send_competitor_report(changes, visual_results, keyword_alerts, None)
                 print(f"  {'Sent successfully!' if success else 'Failed to send (check webhook URL)'}")
             else:
-                print("  No significant changes - skipping Slack notification")
+                print("  No competitor changes detected - skipping Slack notification")
 
         print("\n" + "=" * 60)
         print("Monitoring complete!")
