@@ -85,12 +85,9 @@ def run_full_monitor(skip_screenshots: bool = False, skip_media: bool = False, d
             print("  Would send report with:")
             print(f"    - {len(changes)} competitors with content changes")
         else:
-            # Only send if there are actual content changes
-            if changes:
-                success = send_competitor_report(changes, None, None, None)
-                print(f"  {'Sent successfully!' if success else 'Failed to send (check webhook URL)'}")
-            else:
-                print("  No competitor changes detected - skipping Slack notification")
+            # Always send report (shows "No update" if no changes)
+            success = send_competitor_report(changes, None, None, None)
+            print(f"  {'Sent successfully!' if success else 'Failed to send (check webhook URL)'}")
 
         print("\n" + "=" * 60)
         print("Monitoring complete!")
@@ -173,13 +170,10 @@ def main():
                     }
             print("\n" + generate_media_report(results))
 
-        # Send to Slack
-        if media_mentions:
-            print("\nSending media report to Slack...")
-            success = send_competitor_report({}, None, None, media_mentions)
-            print(f"{'Sent!' if success else 'Failed to send'}")
-        else:
-            print("\nNo new mentions to send to Slack")
+        # Always send to Slack (shows "No update" if empty)
+        print("\nSending media report to Slack...")
+        success = send_competitor_report({}, None, None, media_mentions, is_media_report=True)
+        print(f"{'Sent!' if success else 'Failed to send'}")
     else:
         run_full_monitor(
             skip_screenshots=args.no_screenshots,

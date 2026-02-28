@@ -35,22 +35,19 @@ def send_slack_message(message: str, blocks: list = None) -> bool:
         return False
 
 
-def format_changes_for_slack(changes: dict, visual_results: dict = None, keyword_alerts: dict = None, media_mentions: dict = None) -> tuple[str, list]:
+def format_changes_for_slack(changes: dict, visual_results: dict = None, keyword_alerts: dict = None, media_mentions: dict = None, is_media_report: bool = False) -> tuple[str, list]:
     """Format change data into Slack blocks."""
     from datetime import datetime
     date_str = datetime.now().strftime("%b %d, %Y")
 
     has_content = changes or visual_results or keyword_alerts or media_mentions
 
-    # Check if this is media-only (no competitor data)
-    is_media_only = media_mentions and not changes and not visual_results and not keyword_alerts
-
     if not has_content:
-        if is_media_only:
+        if is_media_report:
             text = "Media Monitor: No new mentions this week."
             header = f"📰 Media Monitor - {date_str}"
         else:
-            text = "Competitor Monitor: No significant changes detected this week."
+            text = "Competitor Monitor: No changes this week."
             header = f"🔍 Competitor Monitor - {date_str}"
         blocks = [
             {
@@ -59,13 +56,13 @@ def format_changes_for_slack(changes: dict, visual_results: dict = None, keyword
             },
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": "No significant changes detected."},
+                "text": {"type": "mrkdwn", "text": "No update"},
             },
         ]
         return text, blocks
 
     # Choose emoji and header based on content type
-    if is_media_only:
+    if is_media_report:
         text = "📰 Media Monitor: New mentions found!"
         header = f"📰 Media Monitor - {date_str}"
     else:
@@ -234,9 +231,9 @@ def format_changes_for_slack(changes: dict, visual_results: dict = None, keyword
     return text, blocks
 
 
-def send_competitor_report(changes: dict, visual_results: dict = None, keyword_alerts: dict = None, media_mentions: dict = None) -> bool:
+def send_competitor_report(changes: dict, visual_results: dict = None, keyword_alerts: dict = None, media_mentions: dict = None, is_media_report: bool = False) -> bool:
     """Send the full competitor report to Slack."""
-    text, blocks = format_changes_for_slack(changes, visual_results, keyword_alerts, media_mentions)
+    text, blocks = format_changes_for_slack(changes, visual_results, keyword_alerts, media_mentions, is_media_report)
     return send_slack_message(text, blocks)
 
 
