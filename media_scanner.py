@@ -23,6 +23,35 @@ from config import (
     REQUEST_DELAY,
 )
 
+# SEO article patterns to filter out (generic content, not real news)
+SEO_PATTERNS = [
+    r"^what is\s",
+    r"^how to\s",
+    r"^top \d+\s",
+    r"^\d+ best\s",
+    r"^\d+ ways to\s",
+    r"^the ultimate guide",
+    r"^complete guide",
+    r"^beginner'?s guide",
+    r"^everything you need to know",
+    r"^\d+ tips\s",
+    r"^why you should",
+    r"^a guide to\s",
+    r"\bvs\.?\b",  # comparison articles like "X vs Y"
+    r"^the best\s",
+    r"^\d+ reasons\s",
+    r"^understanding\s",
+    r"^introduction to\s",
+    r"^explained:?\s",
+    r"\d{4}\s*(guide|tips|trends)",  # "2024 guide", "2024 tips"
+    r"^what are\s",
+    r"^how does\s",
+    r"^getting started",
+    r"^101:?\s",
+    r"^the complete\s",
+    r"^\d+ things\s",
+]
+
 # Sites that need browser rendering to bypass bot protection
 BROWSER_REQUIRED_SITES = [
     "sbcnews.co.uk",
@@ -227,6 +256,14 @@ class MediaScanner:
 
         return articles[:50]
 
+    def is_seo_article(self, title: str) -> bool:
+        """Check if an article title looks like generic SEO content."""
+        title_lower = title.lower().strip()
+        for pattern in SEO_PATTERNS:
+            if re.search(pattern, title_lower):
+                return True
+        return False
+
     def search_for_terms(self, text: str, terms: list[str]) -> list[str]:
         """Search text for specific terms and return matched terms only.
         Uses word boundary matching to avoid false positives like 'SIS' in 'Mississippi'.
@@ -265,8 +302,15 @@ class MediaScanner:
         print(f"    Found {len(articles)} articles")
 
         # Only check article titles for mentions (not main page)
+        # Filter out SEO articles
         articles_with_mentions = []
+        seo_skipped = 0
         for article in articles:
+            # Skip SEO-style articles
+            if self.is_seo_article(article["title"]):
+                seo_skipped += 1
+                continue
+
             matched_terms = self.search_for_terms(article["title"], MEDIA_SEARCH_TERMS)
             if matched_terms:
                 articles_with_mentions.append({
@@ -274,6 +318,9 @@ class MediaScanner:
                     "title": article["title"],
                     "terms": matched_terms,
                 })
+
+        if seo_skipped:
+            print(f"    Filtered {seo_skipped} SEO articles")
 
         time.sleep(REQUEST_DELAY)
 
