@@ -2,9 +2,8 @@ name: Competitor & Media Monitor
 
 on:
   schedule:
-    # Runs every Monday at 9:00 AM UTC
-    # Adjust for your timezone (e.g., 9 AM CET = 8 AM UTC in winter, 7 AM UTC in summer)
-    - cron: '0 9 * * 1'
+    # Runs daily at 9:00 CET (8:00 UTC)
+    - cron: '0 8 * * *'
   workflow_dispatch:  # Allows manual trigger from GitHub UI
 
 jobs:

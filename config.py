@@ -141,8 +141,6 @@ MEDIA_SEARCH_TERMS = [
 # ============================================
 # SLACK CONFIGURATION
 # ============================================
-# Get this from: https://api.slack.com/messaging/webhooks
-# Set SLACK_WEBHOOK_URL environment variable or GitHub secret
 import os
 SLACK_WEBHOOK_URL = os.environ.get("SLACK_WEBHOOK_URL", "YOUR_SLACK_WEBHOOK_URL_HERE")
 
