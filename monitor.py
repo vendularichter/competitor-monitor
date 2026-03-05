@@ -84,9 +84,10 @@ def run_full_monitor(skip_screenshots: bool = False, skip_media: bool = False, d
             print("  Dry run - not sending to Slack")
             print("  Would send report with:")
             print(f"    - {len(changes)} competitors with content changes")
+            print(f"    - {sum(len(d['articles']) for d in media_mentions.values())} media mentions")
         else:
-            # Always send report (shows "No update" if no changes)
-            success = send_competitor_report(changes, None, None, None)
+            # Always send combined report (shows "No update" sections if empty)
+            success = send_competitor_report(changes, None, None, media_mentions)
             print(f"  {'Sent successfully!' if success else 'Failed to send (check webhook URL)'}")
 
         print("\n" + "=" * 60)
