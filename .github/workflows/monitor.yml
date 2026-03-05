@@ -31,15 +31,10 @@ jobs:
           path: data/
         continue-on-error: true  # First run won't have data
 
-      - name: Run competitor monitor
+      - name: Run full monitor (competitor + media)
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: python monitor.py --no-media --no-screenshots
-
-      - name: Run media monitor
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: python monitor.py --media-only
+        run: python monitor.py --no-screenshots
 
       - name: Upload data for next run
         uses: actions/upload-artifact@v4

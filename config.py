@@ -127,6 +127,10 @@ MEDIA_SEARCH_TERMS = [
     "SIS",
     "Sportradar",
     "Betconstruct",
+    "Genius Sports",
+    "Abios",
+    "SABA Sports",
+    "UltraPlay",
     # Your product keywords
     "esports betting",
     "esports odds",

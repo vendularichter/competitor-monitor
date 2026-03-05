@@ -36,45 +36,34 @@ def send_slack_message(message: str, blocks: list = None) -> bool:
 
 
 def format_changes_for_slack(changes: dict, visual_results: dict = None, keyword_alerts: dict = None, media_mentions: dict = None, is_media_report: bool = False) -> tuple[str, list]:
-    """Format change data into Slack blocks."""
+    """Format change data into Slack blocks - combined competitor + media report."""
     from datetime import datetime
     date_str = datetime.now().strftime("%b %d, %Y")
 
-    has_content = changes or visual_results or keyword_alerts or media_mentions
-
-    if not has_content:
-        if is_media_report:
-            text = "Media Monitor: No new mentions this week."
-            header = f"📰 Media Monitor - {date_str}"
-        else:
-            text = "Competitor Monitor: No changes this week."
-            header = f"🔍 Competitor Monitor - {date_str}"
-        blocks = [
-            {
-                "type": "header",
-                "text": {"type": "plain_text", "text": header, "emoji": True},
-            },
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "No update"},
-            },
-        ]
-        return text, blocks
-
-    # Choose emoji and header based on content type
-    if is_media_report:
-        text = "📰 Media Monitor: New mentions found!"
-        header = f"📰 Media Monitor - {date_str}"
-    else:
-        text = "🔍 Competitor Monitor: Changes detected!"
-        header = f"🔍 Competitor Monitor - {date_str}"
+    text = f"🔍 Competitive Intel - {date_str}"
 
     blocks = [
         {
             "type": "header",
-            "text": {"type": "plain_text", "text": header, "emoji": True},
+            "text": {"type": "plain_text", "text": f"🔍 Competitive Intel - {date_str}", "emoji": True},
         },
     ]
+
+    # ==========================================
+    # SECTION 1: COMPETITOR WEBSITE CHANGES
+    # ==========================================
+    blocks.append({
+        "type": "section",
+        "text": {"type": "mrkdwn", "text": "*📊 COMPETITOR WEBSITE CHANGES*"},
+    })
+
+    has_competitor_changes = changes or visual_results or keyword_alerts
+
+    if not has_competitor_changes:
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "_No new changes detected_"},
+        })
 
     # HIGH-ALERT: Keyword alerts (most important!)
     if keyword_alerts:
@@ -227,6 +216,47 @@ def format_changes_for_slack(changes: dict, visual_results: dict = None, keyword
                         },
                     }
                 )
+
+    # ==========================================
+    # SECTION 2: MEDIA MENTIONS
+    # ==========================================
+    blocks.append({"type": "divider"})
+    blocks.append({
+        "type": "section",
+        "text": {"type": "mrkdwn", "text": "*📰 MEDIA MENTIONS*"},
+    })
+
+    if not media_mentions:
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "_No new mentions_"},
+        })
+    else:
+        total_articles = sum(len(d.get("articles", [])) for d in media_mentions.values())
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"_{total_articles} new article(s) found_"},
+        })
+
+        for source_name, data in media_mentions.items():
+            category = data.get("category", "")
+            articles = data.get("articles", [])[:5]  # Top 5 per source
+
+            if articles:
+                article_lines = []
+                for article in articles:
+                    terms = ", ".join(article.get("terms", []))
+                    title = article.get("title", "Article")[:50]
+                    url = article.get("url", "")
+                    article_lines.append(f"• <{url}|{title}...>\n  _Mentions: {terms}_")
+
+                blocks.append({
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*{source_name}* ({category}):\n" + "\n".join(article_lines),
+                    },
+                })
 
     return text, blocks
 
