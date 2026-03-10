@@ -31,6 +31,41 @@ jobs:
           path: data/
         continue-on-error: true  # First run won't have data
 
+      - name: Merge notified articles (baseline + artifact)
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+
+          DATA_DIR = "data"
+          NOTIFIED_FILE = os.path.join(DATA_DIR, "notified_articles.json")
+
+          # Load from repo (baseline committed list)
+          baseline_urls = set()
+          if os.path.exists(NOTIFIED_FILE):
+              with open(NOTIFIED_FILE) as f:
+                  data = json.load(f)
+                  baseline_urls = set(data.get("urls", []))
+                  print(f"Loaded {len(baseline_urls)} URLs from baseline")
+
+          # Artifact may have overwritten the file, so reload and merge
+          # The artifact download overwrites the repo file, but we want both
+          artifact_urls = set()
+          if os.path.exists(NOTIFIED_FILE):
+              with open(NOTIFIED_FILE) as f:
+                  data = json.load(f)
+                  artifact_urls = set(data.get("urls", []))
+
+          # Merge both sets
+          all_urls = baseline_urls | artifact_urls
+          print(f"Total unique URLs after merge: {len(all_urls)}")
+
+          # Save merged list
+          os.makedirs(DATA_DIR, exist_ok=True)
+          with open(NOTIFIED_FILE, "w") as f:
+              json.dump({"urls": list(all_urls), "merged": True}, f, indent=2)
+          EOF
+
       - name: Run full monitor (competitor + media)
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

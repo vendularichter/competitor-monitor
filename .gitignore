@@ -1,5 +1,7 @@
 # Data files (stored as GitHub artifacts instead)
 data/
+# BUT keep the notified articles list in the repo as baseline
+!data/notified_articles.json
 
 # Logs
 logs/

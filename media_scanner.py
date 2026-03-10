@@ -390,7 +390,9 @@ def load_media_scan(filepath: str) -> dict:
 
 
 def get_new_mentions(current: dict, previous: dict) -> dict:
-    """Compare two scans and return only NEW mentions (week-over-week)."""
+    """Compare two scans and return only NEW mentions (week-over-week).
+    DEPRECATED: Use get_never_notified_mentions() instead for persistent tracking.
+    """
     new_mentions = {}
 
     # Get all previously seen article URLs
@@ -413,6 +415,64 @@ def get_new_mentions(current: dict, previous: dict) -> dict:
             }
 
     return new_mentions
+
+
+# ============================================
+# PERSISTENT TRACKING OF NOTIFIED ARTICLES
+# ============================================
+NOTIFIED_FILE = os.path.join(DATA_DIR, "notified_articles.json")
+
+
+def load_notified_articles() -> set:
+    """Load all previously notified article URLs."""
+    if not os.path.exists(NOTIFIED_FILE):
+        return set()
+
+    with open(NOTIFIED_FILE) as f:
+        data = json.load(f)
+
+    return set(data.get("urls", []))
+
+
+def save_notified_articles(urls: set) -> None:
+    """Save all notified article URLs to persistent storage."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+    data = {
+        "urls": list(urls),
+        "last_updated": datetime.now().isoformat(),
+    }
+
+    with open(NOTIFIED_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+
+def get_never_notified_mentions(current: dict) -> tuple[dict, set]:
+    """
+    Find articles that have NEVER been notified before (across all scans).
+    Returns (new_mentions, updated_notified_urls).
+    """
+    notified_urls = load_notified_articles()
+    new_mentions = {}
+
+    # Track URLs we're about to notify
+    new_notified_urls = set(notified_urls)
+
+    for source_name, data in current.items():
+        new_articles = []
+        for article in data.get("articles_with_mentions", []):
+            url = article["url"]
+            if url not in notified_urls:
+                new_articles.append(article)
+                new_notified_urls.add(url)
+
+        if new_articles:
+            new_mentions[source_name] = {
+                "category": data.get("category", ""),
+                "articles": new_articles,
+            }
+
+    return new_mentions, new_notified_urls
 
 
 def generate_media_report(results: dict, new_only: dict = None) -> str:

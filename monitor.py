@@ -11,7 +11,7 @@ from datetime import datetime
 
 from change_detector import detect_all_changes, generate_change_report, get_latest_crawls, load_crawl_data
 from crawler import crawl_all_competitors, save_crawl_data
-from media_scanner import generate_media_report, get_latest_media_scans, get_new_mentions, load_media_scan, save_media_scan, scan_all_media
+from media_scanner import generate_media_report, get_latest_media_scans, get_new_mentions, get_never_notified_mentions, load_media_scan, save_media_scan, save_notified_articles, scan_all_media
 from screenshot_monitor import generate_visual_report, take_competitor_screenshots
 from slack_notifier import send_competitor_report, send_error_notification
 
@@ -43,38 +43,21 @@ def run_full_monitor(skip_screenshots: bool = False, skip_media: bool = False, d
 
         # Step 3: Scan media sources for competitor mentions
         media_mentions = {}
+        updated_notified_urls = set()
         if not skip_media:
             print("\n[3/4] Scanning media sources for competitor mentions...")
             media_results = scan_all_media()
             save_media_scan(media_results)
 
-            # Check for week-over-week changes (only show NEW mentions)
-            media_scan_files = get_latest_media_scans(2)
-            if len(media_scan_files) >= 2:
-                previous_scan = load_media_scan(media_scan_files[1])
-                new_mentions = get_new_mentions(media_results, previous_scan)
-                media_mentions = new_mentions
+            # Get only articles that have NEVER been notified before
+            media_mentions, updated_notified_urls = get_never_notified_mentions(media_results)
 
-                total_new = sum(len(d["articles"]) for d in new_mentions.values())
-                if total_new:
-                    print(f"\n  Found {total_new} NEW article mentions this week!")
-                    print(generate_media_report(media_results, new_mentions))
-                else:
-                    print("\n  No NEW mentions this week (all seen before)")
+            total_new = sum(len(d["articles"]) for d in media_mentions.values())
+            if total_new:
+                print(f"\n  Found {total_new} NEW article mentions (never notified before)!")
+                print(generate_media_report(media_results, media_mentions))
             else:
-                # First run - show all mentions
-                for source_name, data in media_results.items():
-                    articles = data.get("articles_with_mentions", [])
-                    if articles:
-                        media_mentions[source_name] = {
-                            "category": data.get("category", ""),
-                            "articles": articles
-                        }
-
-                if media_mentions:
-                    total = sum(len(d["articles"]) for d in media_mentions.values())
-                    print(f"\n  Found {total} article mentions!")
-                    print(generate_media_report(media_results))
+                print("\n  No NEW mentions (all articles previously notified)")
         else:
             print("\n[3/4] Media scan skipped (--no-media flag)")
 
@@ -88,7 +71,15 @@ def run_full_monitor(skip_screenshots: bool = False, skip_media: bool = False, d
         else:
             # Always send combined report (shows "No update" sections if empty)
             success = send_competitor_report(changes, None, None, media_mentions)
-            print(f"  {'Sent successfully!' if success else 'Failed to send (check webhook URL)'}")
+            if success:
+                # Save notified articles only after successful Slack send
+                if updated_notified_urls:
+                    save_notified_articles(updated_notified_urls)
+                    print("  Sent successfully and recorded notified articles!")
+                else:
+                    print("  Sent successfully!")
+            else:
+                print("  Failed to send (check webhook URL) - will retry next run")
 
         print("\n" + "=" * 60)
         print("Monitoring complete!")
@@ -148,33 +139,25 @@ def main():
         results = scan_all_media()
         save_media_scan(results)
 
-        # Check for week-over-week changes
-        media_scan_files = get_latest_media_scans(2)
-        media_mentions = {}
+        # Get only articles that have NEVER been notified before
+        media_mentions, updated_notified_urls = get_never_notified_mentions(results)
 
-        if len(media_scan_files) >= 2:
-            previous_scan = load_media_scan(media_scan_files[1])
-            new_mentions = get_new_mentions(results, previous_scan)
-            media_mentions = new_mentions
-
-            total_new = sum(len(d["articles"]) for d in new_mentions.values())
-            print(f"\n{total_new} NEW article mentions this week")
-            print(generate_media_report(results, new_mentions))
-        else:
-            # First run - show all mentions
-            for source_name, data in results.items():
-                articles = data.get("articles_with_mentions", [])
-                if articles:
-                    media_mentions[source_name] = {
-                        "category": data.get("category", ""),
-                        "articles": articles
-                    }
-            print("\n" + generate_media_report(results))
+        total_new = sum(len(d["articles"]) for d in media_mentions.values())
+        print(f"\n{total_new} NEW article mentions (never notified before)")
+        if total_new:
+            print(generate_media_report(results, media_mentions))
 
         # Always send to Slack (shows "No update" if empty)
         print("\nSending media report to Slack...")
         success = send_competitor_report({}, None, None, media_mentions, is_media_report=True)
-        print(f"{'Sent!' if success else 'Failed to send'}")
+        if success:
+            if updated_notified_urls:
+                save_notified_articles(updated_notified_urls)
+                print("Sent and recorded notified articles!")
+            else:
+                print("Sent!")
+        else:
+            print("Failed to send - will retry next run")
     else:
         run_full_monitor(
             skip_screenshots=args.no_screenshots,
