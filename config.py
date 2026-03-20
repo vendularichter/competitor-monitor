@@ -64,6 +64,13 @@ COMPETITORS = [
         "pricing_url": None,
         "tier": "Tier 3",
     },
+    {
+        "name": "Betby",
+        "homepage": "https://betby.com",
+        "news_url": "https://betby.com/blog/",
+        "pricing_url": None,
+        "tier": "Tier 1",
+    },
 ]
 
 # ============================================
@@ -120,6 +127,7 @@ MEDIA_SOURCES = [
 MEDIA_SEARCH_TERMS = [
     # Competitor names
     "BETER",
+    "Betby",
     "DATA.BET",
     "PandaScore",
     "GRID",
